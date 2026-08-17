@@ -1,0 +1,26 @@
+# Planning documents — not part of the distributable plugin.
+local_quizrenumber_plan.md
+
+# Local CI runner
+run-plugin-ci.sh
+
+# amd/build/ is deliberately NOT ignored: Moodle plugins ship their built AMD modules,
+# and moodle-plugin-ci's grunt check fails if the committed build is missing or stale.
+# Rebuild with: npx grunt amd --root=local/quizrenumber (from a Moodle root, Node 22).
+
+# moodle-plugin-ci artifacts that land in the plugin folder.
+moodledata/
+package.json
+package-lock.json
+
+# Local tooling.
+/vendor/
+/node_modules/
+.phpunit.result.cache
+*.log
+
+# Editor / OS noise.
+.idea/
+.vscode/
+*.swp
+.DS_Store
