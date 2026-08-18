@@ -168,6 +168,9 @@ Feature: Renumber the questions in a course's quizzes
     Then I should see "0100_Apple"
     And I should see "0105_Banana"
     And I should not see "0010_Apple"
+    # The recomputed name must stay inside its <code> element. Writing textContent to the
+    # cell instead would replace the element and silently drop the monospace formatting.
+    And "//code[@data-region='newname'][contains(text(),'0100_Apple')]" "xpath_element" should exist
 
   @javascript
   Scenario: Turning off prefix stripping keeps the existing number

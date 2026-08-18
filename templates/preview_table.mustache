@@ -27,8 +27,8 @@
     Data attributes required for JS:
     * data-region="local-quizrenumber-preview"
     * data-region="preview-row"
-    * data-region="strippedname"
-    * data-region="newname"
+    * data-region="strippedname" (on the cell)
+    * data-region="newname" (on the inner <code>, see note below)
 
     Context variables required for this template:
     * quizzes - array of quizzes, each with quizid, quizname and rows
@@ -115,7 +115,11 @@
                                 <th scope="row">{{slot}}</th>
                                 <td>{{currentname}}</td>
                                 <td data-region="strippedname">{{strippedname}}</td>
-                                <td data-region="newname"><code>{{newname}}</code></td>
+                                {{! The region is on the <code>, not the <td>: preview.js assigns
+                                    textContent to whatever carries it, and assigning to the cell
+                                    would replace the <code> child with a bare text node, silently
+                                    dropping the monospace as soon as the JS first runs. }}
+                                <td><code data-region="newname">{{newname}}</code></td>
                                 <td>{{{bankname}}}</td>
                                 <td>
                                     {{#skiplabel}}
