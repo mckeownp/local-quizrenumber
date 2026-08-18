@@ -44,6 +44,8 @@ class preview implements \renderable, \templatable {
      * @param renumber_settings $settings The options that produced it.
      * @param question_source_interface|null $source Pass null to skip the "used elsewhere" tooltips.
      * @param bool $isresults True when rendering the after-the-fact results table.
+     * @param int $courseid Course being worked on, needed to build the usage links.
+     * @param array $selectedquizids Quiz ids currently selected, so the usage page can offer a way back.
      */
     public function __construct(
         /** @var renumber_plan The plan being displayed */

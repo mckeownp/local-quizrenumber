@@ -40,7 +40,7 @@ export const init = (formId) => {
         return;
     }
 
-    // moodleform's advcheckbox renders a hidden input alongside the visible one, so the
+    // Moodle's advcheckbox renders a hidden input alongside the visible one, so the
     // selectors above deliberately pick out checkboxes only.
     const selectAll = form.querySelector(SELECTORS.selectAll);
     const quizBoxes = Array.from(form.querySelectorAll(SELECTORS.quiz))
@@ -69,8 +69,8 @@ export const init = (formId) => {
             quizBoxes.forEach((box) => {
                 if (box.checked !== selectAll.checked) {
                     box.checked = selectAll.checked;
-                    // advcheckbox keeps its value in a paired hidden input; dispatching the
-                    // event lets moodleform's own handler keep that in step.
+                    // An advcheckbox keeps its value in a paired hidden input; dispatching
+                    // the event lets moodleform's own handler keep that in step.
                     box.dispatchEvent(new Event('change', {bubbles: true}));
                 }
             });

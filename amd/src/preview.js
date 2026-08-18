@@ -69,10 +69,10 @@ const formatNumber = (number, padding) => String(number).padStart(padding, '0');
  */
 const readSettings = (form) => {
     const value = (name, fallback) => {
-        // moodleform's advcheckbox renders a hidden input carrying the unchecked value
-        // *and* a checkbox, both under the same name. The hidden one comes first in the
-        // DOM, so asking for the name alone would always return a non-empty string and
-        // every checkbox would read as on. Ask for the checkbox specifically.
+        // The advcheckbox element in moodleform renders a hidden input carrying the
+        // unchecked value *and* a checkbox, both under the same name. The hidden one comes
+        // first in the DOM, so asking for the name alone would always return a non-empty
+        // string and every checkbox would read as on. Ask for the checkbox specifically.
         const checkbox = form.querySelector(`input[type="checkbox"][name="${name}"]`);
         if (checkbox) {
             return checkbox.checked;
