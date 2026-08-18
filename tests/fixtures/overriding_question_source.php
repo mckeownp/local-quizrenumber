@@ -14,27 +14,30 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
+namespace local_quizrenumber\tests\fixtures;
+
+use local_quizrenumber\compat\question_source_v4;
+
 /**
- * Version details for local_quizrenumber.
+ * A question source that overrides how slots are classified.
+ *
+ * Stands in for a future question_source_vN that needs to classify slots differently,
+ * which is the entire reason the compatibility layer is built as a class hierarchy. Used to
+ * prove that get_quiz_questions() dispatches to the subclass rather than binding to the
+ * class it happens to be written in.
  *
  * @package    local_quizrenumber
  * @copyright  2026 Paul McKeown, University of Canterbury <paul.mckeown@canterbury.ac.nz>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die();
-
-$plugin->component = 'local_quizrenumber';
-$plugin->version   = 2026081801;
-// Moodle 4.5 LTS is the hard floor. Everything below it is end of life, and the CI matrix
-// cannot reach it anyway: Moodle 4.0-4.4 top out at PHP 8.0 while the lowest tested PHP is
-// 8.1. Claiming a range that is never exercised is a liability for a tool that renames
-// question bank records in bulk.
-$plugin->requires  = 2024100700;
-$plugin->release   = '1.0.0';
-// Feature complete and covered by tests on Moodle 4.5 and 5.1, but not yet used in anger on
-// a production site. Raise to MATURITY_STABLE once it has been.
-$plugin->maturity  = MATURITY_BETA;
-$plugin->dependencies = [
-    'mod_quiz' => ANY_VERSION,
-];
+class overriding_question_source extends question_source_v4 {
+    /**
+     * Declare every slot random, however core has marked it.
+     *
+     * @param \stdClass $slotdata
+     * @return bool
+     */
+    protected static function slot_is_random(\stdClass $slotdata): bool {
+        return true;
+    }
+}

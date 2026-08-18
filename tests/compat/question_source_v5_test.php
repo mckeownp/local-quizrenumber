@@ -249,6 +249,13 @@ final class question_source_v5_test extends \advanced_testcase {
         $this->assertTrue($slots[2]->israndom);
         $this->assertFalse($slots[2]->is_renameable());
         $this->assertNull($slots[2]->questionid);
+
+        // The checklist counts come from SQL over question_set_references, independently of
+        // whatever marker qbank_helper puts on the slot. If the two ever disagree, core has
+        // changed how it flags random slots and the resolver needs updating.
+        $summary = $source->get_quiz_summaries([(int)$quiz->id])[(int)$quiz->id];
+        $this->assertSame(1, $summary['random'], 'Slot flags disagree with the SQL random count.');
+        $this->assertSame(1, $summary['fixed'], 'Slot flags disagree with the SQL fixed count.');
     }
 
     /**

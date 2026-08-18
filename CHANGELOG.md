@@ -43,6 +43,13 @@ First release.
   cannot reach them: Moodle 4.0–4.4 top out at PHP 8.0 while the lowest tested PHP is 8.1.
 - PHP 8.1 or later, which Moodle 4.5 requires anyway.
 
+### Compatibility notes
+
+- Random slots are detected through both markers core has used: `qtype = 'random'` on
+  Moodle 4.5 to 5.1, and the explicit `random` flag introduced in 5.2, where `qtype` is
+  null for random slots. Matching on `qtype` alone made 5.2 report random slots as missing
+  questions.
+
 ### Notes
 
 - Random slots are never renamed. They resolve to a category rather than a single question,

@@ -167,6 +167,41 @@ final class question_source_v4_test extends \advanced_testcase {
         $this->assertTrue($slots[2]->israndom);
         $this->assertFalse($slots[2]->is_renameable());
         $this->assertNull($slots[2]->questionid);
+
+        // Cross-check the slot flags against the SQL counts, which are derived from
+        // question_set_references rather than from qbank_helper's markers. A disagreement
+        // means core has changed how it flags random slots.
+        $summary = $source->get_quiz_summaries([(int)$quiz->id])[(int)$quiz->id];
+        $this->assertSame(1, $summary['random'], 'Slot flags disagree with the SQL random count.');
+        $this->assertSame(1, $summary['fixed'], 'Slot flags disagree with the SQL fixed count.');
+    }
+
+    /**
+     * A subclass can change how slots are classified, and the shared reader honours it.
+     *
+     * get_quiz_questions() lives in question_source_v4 but is inherited by question_source_v5,
+     * so the classification calls must use late static binding. With self:: they would bind
+     * to this class and a subclass override would be silently ignored - which would quietly
+     * disable the one extension point the whole compatibility layer is built around.
+     */
+    public function test_slot_classification_honours_subclass_overrides(): void {
+        require_once(__DIR__ . '/../fixtures/overriding_question_source.php');
+
+        $quiz = $this->create_quiz_with_questions(['alpha']);
+
+        // The stock reader sees an ordinary, renameable question.
+        $stock = (new question_source_v4())->get_quiz_questions((int)$quiz->id);
+        $this->assertFalse($stock[1]->israndom);
+        $this->assertTrue($stock[1]->is_renameable());
+
+        // A subclass that declares everything random must actually take effect.
+        $overridden = (new \local_quizrenumber\tests\fixtures\overriding_question_source())
+            ->get_quiz_questions((int)$quiz->id);
+        $this->assertTrue(
+            $overridden[1]->israndom,
+            'get_quiz_questions() ignored the subclass override; the call site is not using late static binding.'
+        );
+        $this->assertFalse($overridden[1]->is_renameable());
     }
 
     /**

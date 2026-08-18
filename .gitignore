@@ -3,6 +3,7 @@ local_quizrenumber_plan.md
 
 # Local CI runner
 run-plugin-ci.sh
+build-amd.sh
 
 # amd/build/ is deliberately NOT ignored: Moodle plugins ship their built AMD modules,
 # and moodle-plugin-ci's grunt check fails if the committed build is missing or stale.

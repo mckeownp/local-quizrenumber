@@ -105,8 +105,8 @@ Verified on two Moodle versions, both PHP 8.3 / PostgreSQL 15, with phpcs clean 
 
 | Site | PHP | PHPUnit | Behat |
 | --- | --- | --- | --- |
-| Moodle 4.5.13 (branch 405) | 8.3 | 57 tests: 47 passed, 10 skipped | 8 scenarios, 152 steps |
-| Moodle 5.1.5+ (branch 501) | 8.3 | 57 tests: 46 passed, 11 skipped | 8 scenarios, 152 steps |
+| Moodle 4.5.13 (branch 405) | 8.3 | 90 tests: 80 passed, 10 skipped | 10 scenarios, 193 steps |
+| Moodle 5.1.5+ (branch 501) | 8.3 | 90 tests: 76 passed, 14 skipped | 10 scenarios, 193 steps |
 
 No failures on either. The skips are by design: `question_source_v5_test` opts out on a 4.x
 site and `question_source_v4_test` opts out on a 5.x site, so each compatibility

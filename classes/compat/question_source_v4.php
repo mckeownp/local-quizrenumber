@@ -62,9 +62,12 @@ class question_source_v4 implements question_source_interface {
             $slot->name = (string)$slotdata->name;
             $slot->bankcontextid = empty($slotdata->contextid) ? null : (int)$slotdata->contextid;
 
-            if ($slotdata->qtype === 'random') {
+            // Late static binding, not self::. question_source_v5 inherits this method, so
+            // self:: would pin the classification to this class and quietly ignore any
+            // override a future era needs - which is the whole point of the subclass.
+            if (static::slot_is_random($slotdata)) {
                 $slot->israndom = true;
-            } else if ($slotdata->qtype === 'missingtype' && empty($slotdata->questionbankentryid)) {
+            } else if (!static::slot_has_question($slotdata)) {
                 $slot->ismissing = true;
             } else {
                 $slot->questionid = (int)$slotdata->questionid;
@@ -229,6 +232,46 @@ class question_source_v4 implements question_source_interface {
     #[\Override]
     public function check_ready(int $courseid): void {
         // Nothing to check on 4.x: the course question bank always exists.
+    }
+
+    /**
+     * Whether a slot from qbank_helper::get_question_structure() draws a random question.
+     *
+     * How core marks this changed under us, so both markers are honoured:
+     *
+     *  - Moodle 4.5 to 5.1 set qtype to the string 'random'.
+     *  - Moodle 5.2 sets an explicit `random` boolean on every slot and sets qtype to null,
+     *    on the grounds that a random slot has no associated question. Matching on qtype
+     *    alone silently reclassified random slots on that version.
+     *
+     * Checking the explicit flag first means a future version that drops the qtype marker
+     * entirely still works, and older versions keep working through the fallback.
+     *
+     * @param \stdClass $slotdata One entry from qbank_helper::get_question_structure().
+     * @return bool
+     */
+    protected static function slot_is_random(\stdClass $slotdata): bool {
+        if (!empty($slotdata->random)) {
+            return true;
+        }
+
+        return ($slotdata->qtype ?? null) === 'random';
+    }
+
+    /**
+     * Whether a slot resolves to a real question row that could be renamed.
+     *
+     * Deliberately tests the invariant rather than a marker string: core uses placeholder
+     * ids like 's42' for slots with no question behind them, and the qtype it reports for
+     * those has already changed once between versions.
+     *
+     * @param \stdClass $slotdata One entry from qbank_helper::get_question_structure().
+     * @return bool
+     */
+    protected static function slot_has_question(\stdClass $slotdata): bool {
+        return !empty($slotdata->questionid)
+            && is_numeric($slotdata->questionid)
+            && !empty($slotdata->questionbankentryid);
     }
 
     /**
