@@ -22,14 +22,14 @@ global $CFG;
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 
 /**
- * Tests for the Moodle 4.0 - 4.5 question source, run against the real question bank schema.
+ * Tests for the Moodle 4.5 question source, run against the real question bank schema.
  *
  * The numbering rules are tested elsewhere against a stub. What matters here is only that
  * this implementation reads and writes the 4.x question bank correctly, which is the half
  * that cannot be proven without a database.
  *
  * @package    local_quizrenumber
- * @copyright  2026 Paul
+ * @copyright  2026 Paul McKeown, University of Canterbury <paul.mckeown@canterbury.ac.nz>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers     \local_quizrenumber\compat\question_source_v4
  */
@@ -294,9 +294,91 @@ final class question_source_v4_test extends \advanced_testcase {
 
         // The tooltip should name the other quiz, not the one being worked on.
         $details = $source->get_usage_details($slots[1]->questionid, (int)$quizone->id);
-        $this->assertCount(1, $details);
-        $this->assertSame($quiztwo->name, $details[0]['quizname']);
-        $this->assertTrue($details[0]['samecourse']);
+        $this->assertSame(1, $details['total']);
+        $this->assertCount(1, $details['places']);
+        $this->assertSame($quiztwo->name, $details['places'][0]['quizname']);
+        $this->assertTrue($details['places'][0]['samecourse']);
+    }
+
+    /**
+     * A question used in many quizzes returns the true total but only the requested slice.
+     *
+     * This is the shape that broke the tooltip on a real course, so it is worth proving at
+     * the SQL level and not only against the stub.
+     */
+    public function test_get_usage_details_limits_rows_but_not_the_total(): void {
+        $question = $this->questiongenerator->create_question('truefalse', null, [
+            'category' => $this->category->id,
+            'name' => 'heavily reused question',
+        ]);
+
+        for ($i = 0; $i < 12; $i++) {
+            $quiz = $this->getDataGenerator()->create_module('quiz', ['course' => $this->course->id]);
+            quiz_add_quiz_question($question->id, $quiz);
+        }
+
+        $source = new question_source_v4();
+
+        $all = $source->get_usage_details((int)$question->id);
+        $this->assertSame(12, $all['total']);
+        $this->assertCount(12, $all['places']);
+
+        $capped = $source->get_usage_details((int)$question->id, 0, 5);
+        $this->assertSame(12, $capped['total'], 'The total must ignore the limit.');
+        $this->assertCount(5, $capped['places']);
+
+        // The limited slice is the front of the same ordering, not an arbitrary five.
+        $this->assertSame(
+            array_column(array_slice($all['places'], 0, 5), 'quizname'),
+            array_column($capped['places'], 'quizname')
+        );
+    }
+
+    /**
+     * Listing every place still knows which course is the current one.
+     *
+     * Regression test. The usage page lists all places, so it excludes no quiz, and the
+     * current course used to be inferred from the excluded quiz. With nothing excluded that
+     * inference produced course zero and every row was wrongly badged "another course",
+     * even when all the quizzes were in the course the user was working in.
+     */
+    public function test_samecourse_uses_the_explicit_compare_course(): void {
+        $quizone = $this->create_quiz_with_questions(['alpha']);
+        $quiztwo = $this->getDataGenerator()->create_module('quiz', ['course' => $this->course->id]);
+
+        $source = new question_source_v4();
+        $questionid = $source->get_quiz_questions((int)$quizone->id)[1]->questionid;
+        quiz_add_quiz_question($questionid, $quiztwo);
+
+        // No excluded quiz, so the compare course has to be supplied explicitly.
+        $details = $source->get_usage_details($questionid, 0, 0, (int)$this->course->id);
+
+        $this->assertSame(2, $details['total']);
+        $this->assertCount(2, $details['places']);
+        foreach ($details['places'] as $place) {
+            $this->assertTrue(
+                $place['samecourse'],
+                "{$place['quizname']} is in the course being worked on and must not be flagged as elsewhere."
+            );
+            $this->assertSame((int)$this->course->id, $place['courseid']);
+        }
+    }
+
+    /**
+     * Without an explicit compare course, the excluded quiz still supplies it.
+     */
+    public function test_samecourse_falls_back_to_the_excluded_quiz(): void {
+        $quizone = $this->create_quiz_with_questions(['alpha']);
+        $quiztwo = $this->getDataGenerator()->create_module('quiz', ['course' => $this->course->id]);
+
+        $source = new question_source_v4();
+        $questionid = $source->get_quiz_questions((int)$quizone->id)[1]->questionid;
+        quiz_add_quiz_question($questionid, $quiztwo);
+
+        $details = $source->get_usage_details($questionid, (int)$quizone->id);
+
+        $this->assertCount(1, $details['places']);
+        $this->assertTrue($details['places'][0]['samecourse']);
     }
 
     /**
@@ -319,9 +401,9 @@ final class question_source_v4_test extends \advanced_testcase {
         $slots = $source->get_quiz_questions((int)$quizhere->id);
 
         $details = $source->get_usage_details($slots[1]->questionid, (int)$quizhere->id);
-        $this->assertCount(1, $details);
-        $this->assertFalse($details[0]['samecourse']);
-        $this->assertSame($othercourse->fullname, $details[0]['coursename']);
+        $this->assertCount(1, $details['places']);
+        $this->assertFalse($details['places'][0]['samecourse']);
+        $this->assertSame($othercourse->fullname, $details['places'][0]['coursename']);
     }
 
     /**

@@ -18,7 +18,7 @@
  * Callbacks for local_quizrenumber.
  *
  * @package    local_quizrenumber
- * @copyright  2026 Paul
+ * @copyright  2026 Paul McKeown, University of Canterbury <paul.mckeown@canterbury.ac.nz>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 

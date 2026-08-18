@@ -25,7 +25,7 @@ require_once($CFG->libdir . '/formslib.php');
  * Step 2: choose which quizzes in the course to renumber.
  *
  * @package    local_quizrenumber
- * @copyright  2026 Paul
+ * @copyright  2026 Paul McKeown, University of Canterbury <paul.mckeown@canterbury.ac.nz>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class select_quizzes_form extends \moodleform {
@@ -92,6 +92,30 @@ class select_quizzes_form extends \moodleform {
     }
 
     /**
+     * Pick the colour for a quiz's fixed/random count badge.
+     *
+     * The colour answers "will this tool do anything useful here?" at a glance: green means
+     * every question will be renumbered, orange means some slots will be left alone, red
+     * means none of them can be touched.
+     *
+     * @param array $quiz One entry from quiz_finder::get_course_quizzes().
+     * @return string The CSS class to add to the badge.
+     */
+    protected static function count_badge_class(array $quiz): string {
+        if ($quiz['fixedcount'] > 0 && $quiz['randomcount'] === 0) {
+            return 'local-quizrenumber-count-fixed';
+        }
+        if ($quiz['fixedcount'] > 0 && $quiz['randomcount'] > 0) {
+            return 'local-quizrenumber-count-mixed';
+        }
+        if ($quiz['randomcount'] > 0) {
+            return 'local-quizrenumber-count-random';
+        }
+        // No questions at all: nothing to promise either way.
+        return 'local-quizrenumber-count-empty';
+    }
+
+    /**
      * Compose the label shown next to a quiz checkbox.
      *
      * @param array $quiz One entry from quiz_finder::get_course_quizzes().
@@ -101,14 +125,16 @@ class select_quizzes_form extends \moodleform {
         $parts = [\html_writer::tag('strong', $quiz['name'])];
 
         if ($quiz['sectionname'] !== '') {
-            $parts[] = \html_writer::span(s($quiz['sectionname']), 'text-muted ml-2');
+            // Already passed through format_string() by get_section_name(); s() here would
+            // double-escape, turning a section called "R&D" into "R&amp;D" on screen.
+            $parts[] = \html_writer::span($quiz['sectionname'], 'text-muted ml-2');
         }
 
         $counts = get_string('fixedandrandomcount', 'local_quizrenumber', [
             'fixed' => $quiz['fixedcount'],
             'random' => $quiz['randomcount'],
         ]);
-        $parts[] = \html_writer::span($counts, 'badge badge-info ml-2');
+        $parts[] = \html_writer::span($counts, 'badge ml-2 ' . self::count_badge_class($quiz));
 
         if (!$quiz['visible']) {
             $parts[] = \html_writer::span(get_string('hiddenquiz', 'local_quizrenumber'), 'badge badge-secondary ml-2');
@@ -134,7 +160,7 @@ class select_quizzes_form extends \moodleform {
     public function validation($data, $files) {
         $errors = parent::validation($data, $files);
 
-        $selected = array_filter(isset($data['quiz']) ? $data['quiz'] : []);
+        $selected = array_filter($data['quiz'] ?? []);
         if (empty($selected)) {
             $errors['selectall'] = get_string('errornoquizselected', 'local_quizrenumber');
         }

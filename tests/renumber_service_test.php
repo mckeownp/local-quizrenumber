@@ -31,7 +31,7 @@ require_once(__DIR__ . '/fixtures/stub_question_source.php');
  * the same assertions hold on every supported Moodle version.
  *
  * @package    local_quizrenumber
- * @copyright  2026 Paul
+ * @copyright  2026 Paul McKeown, University of Canterbury <paul.mckeown@canterbury.ac.nz>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers     \local_quizrenumber\renumber_service
  */

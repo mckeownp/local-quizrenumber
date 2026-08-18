@@ -24,7 +24,7 @@ namespace local_quizrenumber\event;
  * to keep if it wants a record of who renamed what.
  *
  * @package    local_quizrenumber
- * @copyright  2026 Paul
+ * @copyright  2026 Paul McKeown, University of Canterbury <paul.mckeown@canterbury.ac.nz>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  *
  * @property-read array $other {
@@ -60,8 +60,8 @@ class questions_renumbered extends \core\event\base {
      * @return string
      */
     public function get_description() {
-        $count = isset($this->other['count']) ? $this->other['count'] : 0;
-        $quizcount = isset($this->other['quizids']) ? count($this->other['quizids']) : 0;
+        $count = $this->other['count'] ?? 0;
+        $quizcount = count($this->other['quizids'] ?? []);
         return "The user with id '{$this->userid}' renumbered {$count} question(s) " .
             "across {$quizcount} quiz(zes) in the course with id '{$this->courseid}'.";
     }

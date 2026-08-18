@@ -21,7 +21,7 @@
  * recomputes the whole plan from scratch on submit regardless, so nothing here is trusted.
  *
  * @module     local_quizrenumber/preview
- * @copyright  2026 Paul
+ * @copyright  2026 Paul McKeown, University of Canterbury <paul.mckeown@canterbury.ac.nz>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 

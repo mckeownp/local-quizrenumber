@@ -1,0 +1,113 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_quizrenumber/usage_list
+
+    Every quiz that uses one shared question.
+
+    Classes required for JS:
+    * none
+
+    Data attributes required for JS:
+    * none
+
+    Context variables required for this template:
+    * questionname - the question being described
+    * total - how many quizzes use it
+    * rows - array of {coursename, quizname, samecourse}
+    * hasrows - whether there is anything to list
+    * backurl - where the back button returns to
+
+    Example context (json):
+    {
+        "questionname": "swept_area(blade_length)",
+        "total": 2,
+        "hasrows": true,
+        "backurl": "/local/quizrenumber/index.php?id=2",
+        "rows": [
+            {
+                "coursename": "Course 1", "quizname": "Week 1 quiz", "samecourse": true,
+                "quizurl": "/mod/quiz/view.php?id=12"
+            },
+            {
+                "coursename": "Course 2", "quizname": "Final exam", "samecourse": false,
+                "quizurl": ""
+            }
+        ]
+    }
+}}
+<div class="local-quizrenumber-usage">
+
+    <p class="lead">{{#str}}usageintro, local_quizrenumber{{/str}}</p>
+
+    {{! Escaped, unlike the course and quiz names below: this is the raw question name
+        straight from the question bank, deliberately shown verbatim so the user sees the
+        exact string being renamed, and it has never been through format_string(). }}
+    <p><strong>{{questionname}}</strong></p>
+
+    <div class="alert alert-info" role="alert">
+        {{#str}}usagetotal, local_quizrenumber, {{total}}{{/str}}
+    </div>
+
+    {{#hasrows}}
+        <div class="table-responsive">
+            <table class="table table-sm generaltable">
+                <caption class="sr-only">{{#str}}usagetablecaption, local_quizrenumber{{/str}}</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">{{#str}}columncourse, local_quizrenumber{{/str}}</th>
+                        <th scope="col">{{#str}}columnquiz, local_quizrenumber{{/str}}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#rows}}
+                        <tr>
+                            <td>
+                                {{{coursename}}}
+                                {{^samecourse}}
+                                    <span class="badge badge-secondary ml-2">
+                                        {{#str}}usageothercourselabel, local_quizrenumber{{/str}}
+                                    </span>
+                                {{/samecourse}}
+                            </td>
+                            <td>
+                                {{#quizurl}}
+                                    {{! rel="noopener" because target="_blank" otherwise hands the
+                                        opened page a reference back to this one. }}
+                                    <a href="{{quizurl}}" target="_blank" rel="noopener noreferrer">
+                                        {{{quizname}}}
+                                        <span class="sr-only">{{#str}}opensinnewtab, local_quizrenumber{{/str}}</span>
+                                    </a>
+                                {{/quizurl}}
+                                {{^quizurl}}
+                                    {{! No link: the user cannot open this quiz, so showing one
+                                        would only bounce them off a permission error. }}
+                                    {{{quizname}}}
+                                    <span class="text-muted ml-2">
+                                        {{#str}}quiznotaccessible, local_quizrenumber{{/str}}
+                                    </span>
+                                {{/quizurl}}
+                            </td>
+                        </tr>
+                    {{/rows}}
+                </tbody>
+            </table>
+        </div>
+    {{/hasrows}}
+
+    <a href="{{backurl}}" class="btn btn-secondary">{{#str}}backtopreview, local_quizrenumber{{/str}}</a>
+</div>

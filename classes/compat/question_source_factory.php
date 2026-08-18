@@ -22,12 +22,12 @@ namespace local_quizrenumber\compat;
  * This is the only place in the plugin allowed to look at $CFG->branch.
  *
  * @package    local_quizrenumber
- * @copyright  2026 Paul
+ * @copyright  2026 Paul McKeown, University of Canterbury <paul.mckeown@canterbury.ac.nz>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class question_source_factory {
     /** @var question_source_interface|null Overridden implementation, for tests. */
-    protected static $override = null;
+    protected static ?question_source_interface $override = null;
 
     /**
      * Build the right question source for this site.
@@ -43,8 +43,8 @@ class question_source_factory {
 
         $branch = (int)$CFG->branch;
 
-        if ($branch < 400) {
-            // Unreachable in practice: version.php requires Moodle 4.0, so installation is
+        if ($branch < 405) {
+            // Unreachable in practice: version.php requires Moodle 4.5, so installation is
             // blocked on older sites. Kept as a defensive fallback.
             throw new \moodle_exception('errorunsupportedversion', 'local_quizrenumber', '', $CFG->release);
         }

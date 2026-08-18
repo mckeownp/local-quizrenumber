@@ -23,76 +23,65 @@ namespace local_quizrenumber\compat;
  * question_source_* implementation is responsible for producing these, so that forms,
  * the service and the output layer never need a version check of their own.
  *
- * Deliberately a plain value object with untyped public properties: the plugin supports
- * Moodle 4.0, which supports PHP 7.3, so typed properties and constructor promotion are
- * not available.
+ * A plain mutable value object rather than a constructor-injected immutable one: the
+ * question source discovers the fields in stages (identity first, then the resolved
+ * question, then usage counts and capability checks in batches), so forcing everything
+ * through the constructor would mean assembling parallel arrays just to satisfy it.
  *
  * @package    local_quizrenumber
- * @copyright  2026 Paul
+ * @copyright  2026 Paul McKeown, University of Canterbury <paul.mckeown@canterbury.ac.nz>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class question_slot {
-    /** @var int Id of the quiz this slot belongs to. */
-    public $quizid;
-
-    /** @var string Name of the quiz, for display and grouping. */
-    public $quizname;
-
-    /** @var int Slot number within the quiz, 1-based. */
-    public $slot;
-
-    /** @var int Id of the {quiz_slots} row. */
-    public $slotid;
-
     /** @var int|null Id of the {question} row for the version this slot resolves to. Null for random/missing slots. */
-    public $questionid;
+    public ?int $questionid = null;
 
     /** @var int|null Id of the owning {question_bank_entries} row. Null for random/missing slots. */
-    public $bankentryid;
+    public ?int $bankentryid = null;
 
     /** @var string Current question name, or a placeholder for random/missing slots. */
-    public $name;
+    public string $name = '';
 
     /** @var int|null Context id of the category the question lives in. */
-    public $bankcontextid;
+    public ?int $bankcontextid = null;
 
     /** @var string Human readable label for where the question comes from, e.g. a qbank instance name. */
-    public $bankname;
+    public string $bankname = '';
 
     /** @var bool True if this slot draws a random question from a category rather than naming one question. */
-    public $israndom;
+    public bool $israndom = false;
 
     /** @var bool True if the question this slot points at could not be loaded. */
-    public $ismissing;
+    public bool $ismissing = false;
 
     /** @var int Number of quiz slots across the site that use this question's bank entry. */
-    public $usagecount;
+    public int $usagecount = 1;
 
     /** @var bool True if the current user may rename this question in its own context. */
-    public $editable;
+    public bool $editable = true;
 
     /**
      * Build a slot.
      *
-     * @param int $quizid
-     * @param string $quizname
-     * @param int $slot
-     * @param int $slotid
+     * The four identifying values are readonly: which quiz and which slot this describes is
+     * settled at construction. Everything else is filled in by the question source as it
+     * resolves the slot, so those stay writable.
+     *
+     * @param int $quizid Id of the quiz this slot belongs to.
+     * @param string $quizname Name of the quiz, for display and grouping.
+     * @param int $slot Slot number within the quiz, 1-based.
+     * @param int $slotid Id of the {quiz_slots} row.
      */
-    public function __construct(int $quizid, string $quizname, int $slot, int $slotid) {
-        $this->quizid = $quizid;
-        $this->quizname = $quizname;
-        $this->slot = $slot;
-        $this->slotid = $slotid;
-        $this->questionid = null;
-        $this->bankentryid = null;
-        $this->name = '';
-        $this->bankcontextid = null;
-        $this->bankname = '';
-        $this->israndom = false;
-        $this->ismissing = false;
-        $this->usagecount = 1;
-        $this->editable = true;
+    public function __construct(
+        /** @var int Id of the quiz this slot belongs to */
+        public readonly int $quizid,
+        /** @var string Name of the quiz, for display and grouping */
+        public readonly string $quizname,
+        /** @var int Slot number within the quiz, 1-based */
+        public readonly int $slot,
+        /** @var int Id of the {quiz_slots} row */
+        public readonly int $slotid,
+    ) {
     }
 
     /**

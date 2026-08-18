@@ -24,7 +24,7 @@ namespace local_quizrenumber\compat;
  * teaching question_source_factory about it, and changing nothing else.
  *
  * @package    local_quizrenumber
- * @copyright  2026 Paul
+ * @copyright  2026 Paul McKeown, University of Canterbury <paul.mckeown@canterbury.ac.nz>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 interface question_source_interface {
@@ -73,13 +73,30 @@ interface question_source_interface {
     public function get_usage_count(int $questionid): int;
 
     /**
-     * Describe where else a question is used, for the badge tooltip.
+     * Describe where else a question is used.
+     *
+     * A question can genuinely be used in dozens of quizzes - an exam question reused across
+     * years is normal - so callers that only want a summary should pass a limit rather than
+     * fetching every row. The returned total is always the full count, whatever the limit.
      *
      * @param int $questionid Id of a {question} row.
      * @param int $excludequizid Quiz to leave out of the list, normally the one being renumbered.
-     * @return array List of ['coursename' => string, 'quizname' => string, 'samecourse' => bool].
+     *                           Pass zero to list every place, including the current quiz.
+     * @param int $limit Maximum places to return; zero for all of them.
+     * @param int $comparecourseid Course to judge "same course" against. Callers that list every
+     *                             place must pass this, because with no excluded quiz there is
+     *                             nothing to infer the current course from. Zero falls back to
+     *                             the course owning $excludequizid.
+     * @return array ['places' => list of ['courseid' => int, 'coursename' => string,
+     *                'quizid' => int, 'quizname' => string, 'samecourse' => bool],
+     *                'total' => int total number of quizzes].
      */
-    public function get_usage_details(int $questionid, int $excludequizid = 0): array;
+    public function get_usage_details(
+        int $questionid,
+        int $excludequizid = 0,
+        int $limit = 0,
+        int $comparecourseid = 0
+    ): array;
 
     /**
      * Check that this site is in a state where the question bank can be read meaningfully.

@@ -26,21 +26,21 @@ use local_quizrenumber\compat\question_source_interface;
  * version, and the version-specific classes are tested separately against a real schema.
  *
  * @package    local_quizrenumber
- * @copyright  2026 Paul
+ * @copyright  2026 Paul McKeown, University of Canterbury <paul.mckeown@canterbury.ac.nz>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class stub_question_source implements question_source_interface {
     /** @var array Question id => name, standing in for the question table. */
-    public $names = [];
+    public array $names = [];
 
     /** @var array Question id => usage count. */
-    public $usagecounts = [];
+    public array $usagecounts = [];
 
     /** @var array Slots keyed by quiz id. */
-    public $slots = [];
+    public array $slots = [];
 
     /** @var bool Whether check_ready() should throw. */
-    public $notready = false;
+    public bool $notready = false;
 
     /**
      * Build the stub, optionally pre-loaded with slots.
@@ -58,7 +58,7 @@ class stub_question_source implements question_source_interface {
      * @return \local_quizrenumber\compat\question_slot[]
      */
     public function get_quiz_questions(int $quizid): array {
-        return isset($this->slots[$quizid]) ? $this->slots[$quizid] : [];
+        return $this->slots[$quizid] ?? [];
     }
 
     /**
@@ -98,18 +98,33 @@ class stub_question_source implements question_source_interface {
      * @return int
      */
     public function get_usage_count(int $questionid): int {
-        return isset($this->usagecounts[$questionid]) ? $this->usagecounts[$questionid] : 1;
+        return $this->usagecounts[$questionid] ?? 1;
     }
 
+    /** @var array Question id => list of places, standing in for the usage query. */
+    public array $usagedetails = [];
+
     /**
-     * The stub never describes usage; the badge text is covered by the compat layer tests.
+     * Replays whatever places the test loaded, honouring the limit so the capping logic
+     * can be exercised without a database.
      *
      * @param int $questionid
      * @param int $excludequizid
+     * @param int $limit
+     * @param int $comparecourseid
      * @return array
      */
-    public function get_usage_details(int $questionid, int $excludequizid = 0): array {
-        return [];
+    public function get_usage_details(
+        int $questionid,
+        int $excludequizid = 0,
+        int $limit = 0,
+        int $comparecourseid = 0
+    ): array {
+        $places = $this->usagedetails[$questionid] ?? [];
+        return [
+            'places' => $limit > 0 ? array_slice($places, 0, $limit) : $places,
+            'total' => count($places),
+        ];
     }
 
     /**

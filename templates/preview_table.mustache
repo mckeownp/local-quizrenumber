@@ -56,7 +56,7 @@
                         "slot": 1, "currentname": "0010_alpha", "strippedname": "alpha",
                         "newname": "0010_alpha", "bankname": "Default for C1", "israndom": false,
                         "skipreason": "", "skiplabel": "", "skipped": false, "shared": false,
-                        "usagecount": 1, "usagetooltip": ""
+                        "usagecount": 1, "usagetooltip": "", "usageurl": ""
                     }
                 ]
             }
@@ -86,7 +86,10 @@
         </p>
 
         {{#quizzes}}
-            <h4 class="mt-4">{{quizname}}</h4>
+            {{! Already escaped by format_string() in PHP, so emit raw to avoid double-escaping
+                "R&D" into "R&amp;D". Safe in element content: format_string() converts
+                < and > to entities. }}
+            <h4 class="mt-4">{{{quizname}}}</h4>
             <div class="table-responsive">
                 <table class="table table-sm generaltable local-quizrenumber-table">
                     {{! Not parameterised with the quiz name: a comma in the name would break the str helper's argument parsing. }}
@@ -113,15 +116,26 @@
                                 <td>{{currentname}}</td>
                                 <td data-region="strippedname">{{strippedname}}</td>
                                 <td data-region="newname"><code>{{newname}}</code></td>
-                                <td>{{bankname}}</td>
+                                <td>{{{bankname}}}</td>
                                 <td>
                                     {{#skiplabel}}
                                         <span class="badge badge-secondary">{{skiplabel}}</span>
                                     {{/skiplabel}}
                                     {{#shared}}
-                                        <span class="badge badge-warning" title="{{usagetooltip}}">
-                                            {{#str}}usedelsewhere, local_quizrenumber, {{usagecount}}{{/str}}
-                                        </span>
+                                        {{! Deliberately escaped, unlike the cells above: this lands in an
+                                            attribute, and format_string() does not escape quotes, so a name
+                                            containing one could otherwise break out of the title. }}
+                                        {{#usageurl}}
+                                            <a href="{{usageurl}}" class="badge badge-warning"
+                                               title="{{usagetooltip}}">
+                                                {{#str}}usedelsewhere, local_quizrenumber, {{usagecount}}{{/str}}
+                                            </a>
+                                        {{/usageurl}}
+                                        {{^usageurl}}
+                                            <span class="badge badge-warning" title="{{usagetooltip}}">
+                                                {{#str}}usedelsewhere, local_quizrenumber, {{usagecount}}{{/str}}
+                                            </span>
+                                        {{/usageurl}}
                                     {{/shared}}
                                 </td>
                             </tr>

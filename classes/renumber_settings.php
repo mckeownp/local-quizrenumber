@@ -24,7 +24,7 @@ namespace local_quizrenumber;
  * are checked again here where the numbering actually happens.
  *
  * @package    local_quizrenumber
- * @copyright  2026 Paul
+ * @copyright  2026 Paul McKeown, University of Canterbury <paul.mckeown@canterbury.ac.nz>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class renumber_settings {
@@ -49,44 +49,35 @@ class renumber_settings {
     /** @var string One running sequence across every selected quiz. */
     const SCOPE_CONTINUOUS = 'continuous';
 
-    /** @var int Number given to the first question. */
-    public $startnumber;
-
-    /** @var int Step between consecutive questions. */
-    public $increment;
-
-    /** @var int Number of digits to pad the prefix to. */
-    public $padding;
-
-    /** @var string One of the SCOPE_* constants. */
-    public $scope;
-
-    /** @var bool Whether to strip an existing NNNN_ prefix before applying the new one. */
-    public $stripprefix;
-
-    /** @var bool Whether random slots consume a number even though they are never renamed. */
-    public $reserverandom;
-
     /**
      * Build and validate a set of options.
      *
-     * @param int $startnumber
-     * @param int $increment
-     * @param int $padding
-     * @param string $scope
-     * @param bool $stripprefix
-     * @param bool $reserverandom
+     * Readonly throughout: once a set of options has been validated, nothing should be able
+     * to change it out from under the numbering, which is exactly the class of bug that
+     * would produce a half-renumbered quiz.
+     *
+     * @param int $startnumber Number given to the first question.
+     * @param int $increment Step between consecutive questions.
+     * @param int $padding Number of digits to pad the prefix to.
+     * @param string $scope One of the SCOPE_* constants.
+     * @param bool $stripprefix Whether to strip an existing NNNN_ prefix before applying the new one.
+     * @param bool $reserverandom Whether random slots consume a number even though they are never renamed.
      * @throws \invalid_parameter_exception If any value is out of range.
      */
     public function __construct(
-        int $startnumber = 10,
-        int $increment = 10,
-        int $padding = 4,
-        string $scope = self::SCOPE_PER_QUIZ,
-        bool $stripprefix = true,
-        bool $reserverandom = false
+        /** @var int Number given to the first question */
+        public readonly int $startnumber = 10,
+        /** @var int Step between consecutive questions */
+        public readonly int $increment = 10,
+        /** @var int Number of digits to pad the prefix to */
+        public readonly int $padding = 4,
+        /** @var string One of the SCOPE_* constants */
+        public readonly string $scope = self::SCOPE_PER_QUIZ,
+        /** @var bool Whether to strip an existing NNNN_ prefix before applying the new one */
+        public readonly bool $stripprefix = true,
+        /** @var bool Whether random slots consume a number even though they are never renamed */
+        public readonly bool $reserverandom = false,
     ) {
-
         if ($startnumber < 0 || $startnumber > self::MAX_START) {
             throw new \invalid_parameter_exception('Start number must be between 0 and ' . self::MAX_START);
         }
@@ -101,13 +92,6 @@ class renumber_settings {
         if ($scope !== self::SCOPE_PER_QUIZ && $scope !== self::SCOPE_CONTINUOUS) {
             throw new \invalid_parameter_exception('Unknown numbering scope: ' . $scope);
         }
-
-        $this->startnumber = $startnumber;
-        $this->increment = $increment;
-        $this->padding = $padding;
-        $this->scope = $scope;
-        $this->stripprefix = $stripprefix;
-        $this->reserverandom = $reserverandom;
     }
 
     /**
@@ -121,7 +105,7 @@ class renumber_settings {
             (int)$data->startnumber,
             (int)$data->increment,
             (int)$data->padding,
-            isset($data->scope) ? (string)$data->scope : self::SCOPE_PER_QUIZ,
+            (string)($data->scope ?? self::SCOPE_PER_QUIZ),
             !empty($data->stripprefix),
             !empty($data->reserverandom)
         );
@@ -135,9 +119,9 @@ class renumber_settings {
     public static function from_site_defaults(): self {
         $config = get_config('local_quizrenumber');
         return new self(
-            isset($config->defaultstartnumber) ? (int)$config->defaultstartnumber : 10,
-            isset($config->defaultincrement) ? (int)$config->defaultincrement : 10,
-            isset($config->defaultpadding) ? (int)$config->defaultpadding : 4
+            (int)($config->defaultstartnumber ?? 10),
+            (int)($config->defaultincrement ?? 10),
+            (int)($config->defaultpadding ?? 4)
         );
     }
 

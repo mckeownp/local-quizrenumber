@@ -7,7 +7,9 @@ wrote is stripped before the new one is applied, so re-running it never stacks p
 
 ## Requirements
 
-- Moodle 4.0 or later (`$plugin->requires = 2022041900`). Installation is blocked on older sites.
+- Moodle 4.5 LTS or later (`$plugin->requires = 2024100700`). Installation is blocked on older
+  sites, which are all end of life in any case.
+- PHP 8.1 or later (implied by Moodle 4.5).
 - `mod_quiz`.
 
 ## Installing
@@ -41,9 +43,19 @@ are listed as skipped rather than silently dropped.
 ## Shared questions
 
 Question names live in the shared question bank. Renaming affects every quiz that uses the
-question, including quizzes in other courses. The preview badges shared questions with a
-tooltip naming where else they are used, and a confirmation checkbox becomes mandatory
-whenever any selected question is shared.
+question, including quizzes in other courses. The preview badges shared questions with the
+exact count, and a confirmation checkbox becomes mandatory whenever any selected question is
+shared.
+
+The badge tooltip names the first few places and summarises the rest ("… and 74 others"),
+because reuse at real scale is not small: on the course this was developed against, one exam
+question is used in 83 quizzes, which produced an unreadable 2,771 character tooltip before
+the cap. Clicking the badge opens the full list, with a link back to the preview you came
+from.
+
+On the quiz selection step, each quiz's count badge is colour coded: green when every
+question can be renumbered, orange when some slots are random and will be skipped, red when
+the quiz is entirely random and renumbering will do nothing.
 
 ## Architecture
 
@@ -53,7 +65,7 @@ knowledge is confined to `classes/compat/`:
 | File | Responsibility |
 | --- | --- |
 | `question_source_interface.php` | The only contract the rest of the plugin knows |
-| `question_source_v4.php` | Moodle 4.0–4.5: course-context category trees |
+| `question_source_v4.php` | Moodle 4.5: course-context category trees |
 | `question_source_v5.php` | Moodle 5.0+: `mod_qbank` module contexts, multiple banks per course |
 | `question_source_factory.php` | Picks an implementation from `$CFG->branch` |
 
@@ -91,14 +103,15 @@ npx grunt amd --root=local/quizrenumber
 
 Verified on two Moodle versions, both PHP 8.3 / PostgreSQL 15, with phpcs clean on each:
 
-| Site | PHPUnit | Behat |
-| --- | --- | --- |
-| Moodle 4.5.13 (branch 405) | 47/47 | 8/8 |
-| Moodle 5.1.5+ (branch 501) | 46 passed, 11 skipped | 8/8 |
+| Site | PHP | PHPUnit | Behat |
+| --- | --- | --- | --- |
+| Moodle 4.5.13 (branch 405) | 8.3 | 57 tests: 47 passed, 10 skipped | 8 scenarios, 152 steps |
+| Moodle 5.1.5+ (branch 501) | 8.3 | 57 tests: 46 passed, 11 skipped | 8 scenarios, 152 steps |
 
-The skips are `question_source_v4_test` opting out on a 5.x site, and vice versa: each
-compatibility implementation is tested only against the question bank era it targets. The
-Behat feature is shared and unmodified between the two.
+No failures on either. The skips are by design: `question_source_v5_test` opts out on a 4.x
+site and `question_source_v4_test` opts out on a 5.x site, so each compatibility
+implementation is only ever exercised against the question bank era it targets. The Behat
+feature file is shared and byte-identical between the two runs.
 
 Moodle 5.0 itself has not been tested — the 5.x site available was 5.1. Since the factory
 selects `question_source_v5` for any branch >= 500 and 5.1 keeps the `mod_qbank` model
@@ -106,11 +119,13 @@ introduced in 5.0, 5.0 is expected to work, but that is inference rather than a 
 
 ### A note on PHPUnit deprecations
 
-On Moodle 5.x, PHPUnit 11 reports 10 deprecations for `@covers` and `@dataProvider` in
-doc-comments. These are kept deliberately: the plugin supports Moodle 4.0, which ships
-PHPUnit 9, and that version does not read the attribute equivalents — switching would break
-the tests on the older half of the supported range. They do not fail `--fail-on-warning`.
-Revisit when the minimum supported Moodle version ships PHPUnit 10 or later.
+Moodle 4.5 ships PHPUnit 9.6 and reports none of these. On Moodle 5.x, PHPUnit 11 reports
+10 deprecations for `@covers` and `@dataProvider` in
+doc-comments. These are kept deliberately: Moodle 4.5 pins `phpunit/phpunit ^9.6`, and
+PHPUnit 9 predates attributes entirely, so switching would break the tests on the floor
+version. Moodle 5.2 is still on PHPUnit 11 (via `moodle/moodle-testing ^1.0`), so nothing in
+the supported range removes doc-comment metadata. They do not fail `--fail-on-warning`.
+Revisit when the minimum supported Moodle ships PHPUnit 10 or later.
 
 ## Licence
 

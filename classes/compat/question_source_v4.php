@@ -21,7 +21,7 @@ use mod_quiz\question\bank\qbank_helper;
 use question_bank;
 
 /**
- * Question source for the Moodle 4.0 - 4.5 question bank era.
+ * Question source for the Moodle 4.5 question bank era.
  *
  * In this era a quiz slot reaches its question through
  * quiz_slots -> question_references -> question_bank_entries -> question_versions -> question,
@@ -34,12 +34,12 @@ use question_bank;
  * many slots share a bank entry - are written out here.
  *
  * @package    local_quizrenumber
- * @copyright  2026 Paul
+ * @copyright  2026 Paul McKeown, University of Canterbury <paul.mckeown@canterbury.ac.nz>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class question_source_v4 implements question_source_interface {
     /** @var array Cache of context id => whether $USER can edit questions there, per request. */
-    protected $editablecache = [];
+    protected array $editablecache = [];
 
     #[\Override]
     public function get_quiz_questions(int $quizid): array {
@@ -50,6 +50,7 @@ class question_source_v4 implements question_source_interface {
         $quizcontext = context_module::instance($cm->id);
 
         $structure = qbank_helper::get_question_structure($quizid, $quizcontext);
+        $quizname = format_string($quiz->name, true, ['context' => $quizcontext]);
 
         $slots = [];
         $bankentryids = [];
@@ -57,7 +58,7 @@ class question_source_v4 implements question_source_interface {
         $slotcategories = [];
 
         foreach ($structure as $slotdata) {
-            $slot = new question_slot($quizid, $quiz->name, (int)$slotdata->slot, (int)$slotdata->slotid);
+            $slot = new question_slot($quizid, $quizname, (int)$slotdata->slot, (int)$slotdata->slotid);
             $slot->name = (string)$slotdata->name;
             $slot->bankcontextid = empty($slotdata->contextid) ? null : (int)$slotdata->contextid;
 
@@ -83,10 +84,10 @@ class question_source_v4 implements question_source_interface {
         $usagecounts = $this->get_usage_counts_for_entries($bankentryids);
 
         foreach ($slots as $slotnumber => $slot) {
-            $categoryid = isset($slotcategories[$slotnumber]) ? $slotcategories[$slotnumber] : 0;
+            $categoryid = $slotcategories[$slotnumber] ?? 0;
             $slot->bankname = $this->describe_bank(
                 $slot->bankcontextid,
-                isset($categorynames[$categoryid]) ? $categorynames[$categoryid] : '',
+                $categorynames[$categoryid] ?? '',
                 $quizcontext
             );
             if ($slot->bankentryid !== null && isset($usagecounts[$slot->bankentryid])) {
@@ -162,16 +163,21 @@ class question_source_v4 implements question_source_interface {
             return 0;
         }
         $counts = $this->get_usage_counts_for_entries([$bankentryid]);
-        return isset($counts[$bankentryid]) ? $counts[$bankentryid] : 0;
+        return $counts[$bankentryid] ?? 0;
     }
 
     #[\Override]
-    public function get_usage_details(int $questionid, int $excludequizid = 0): array {
+    public function get_usage_details(
+        int $questionid,
+        int $excludequizid = 0,
+        int $limit = 0,
+        int $comparecourseid = 0
+    ): array {
         global $DB;
 
         $bankentryid = $this->get_bank_entry_id($questionid);
         if ($bankentryid === null) {
-            return [];
+            return ['places' => [], 'total' => 0];
         }
 
         $params = ['bankentryid' => $bankentryid];
@@ -181,29 +187,43 @@ class question_source_v4 implements question_source_interface {
             $exclude = ' AND q.id <> :excludequizid';
         }
 
-        $records = $DB->get_records_sql("
-                SELECT DISTINCT q.id AS quizid, q.name AS quizname, c.id AS courseid, c.fullname AS coursename
-                  FROM {question_references} qr
+        $from = "  FROM {question_references} qr
                   JOIN {quiz_slots} slot ON slot.id = qr.itemid
                   JOIN {quiz} q ON q.id = slot.quizid
                   JOIN {course} c ON c.id = q.course
                  WHERE qr.component = 'mod_quiz'
                        AND qr.questionarea = 'slot'
                        AND qr.questionbankentryid = :bankentryid
-                       $exclude
-              ORDER BY c.fullname, q.name
-                ", $params);
+                       $exclude";
 
-        $currentcourseid = $this->get_course_id_for_quiz($excludequizid);
-        $details = [];
+        // The total is counted separately rather than inferred from the returned rows,
+        // because the caller may have asked for only the first few. Counting distinct quizzes
+        // (not slots) matters: a quiz that uses the same question in two slots is one place.
+        $total = (int)$DB->get_field_sql("SELECT COUNT(DISTINCT q.id) $from", $params);
+
+        $records = $DB->get_records_sql("
+                SELECT DISTINCT q.id AS quizid, q.name AS quizname, c.id AS courseid, c.fullname AS coursename
+                $from
+              ORDER BY c.fullname, q.name
+                ", $params, 0, $limit > 0 ? $limit : 0);
+
+        // An explicit compare course wins. Falling back to the excluded quiz's course only
+        // works when there is one, which is why listing every place needs the explicit value.
+        $currentcourseid = $comparecourseid ?: $this->get_course_id_for_quiz($excludequizid);
+
+        $places = [];
         foreach ($records as $record) {
-            $details[] = [
-                'coursename' => format_string($record->coursename),
-                'quizname' => format_string($record->quizname),
+            $coursecontext = \context_course::instance((int)$record->courseid, IGNORE_MISSING);
+            $places[] = [
+                'courseid' => (int)$record->courseid,
+                'coursename' => format_string($record->coursename, true, ['context' => $coursecontext]),
+                'quizid' => (int)$record->quizid,
+                'quizname' => format_string($record->quizname, true, ['context' => $coursecontext]),
                 'samecourse' => ((int)$record->courseid === $currentcourseid),
             ];
         }
-        return $details;
+
+        return ['places' => $places, 'total' => $total];
     }
 
     #[\Override]
@@ -296,7 +316,11 @@ class question_source_v4 implements question_source_interface {
         if ($contextid !== null && (int)$contextid === (int)$quizcontext->id) {
             return get_string('bankquizonly', 'local_quizrenumber');
         }
-        return $categoryname === '' ? get_string('bankunknown', 'local_quizrenumber') : format_string($categoryname);
+        if ($categoryname === '' || $contextid === null) {
+            return get_string('bankunknown', 'local_quizrenumber');
+        }
+        $context = \context::instance_by_id($contextid, IGNORE_MISSING);
+        return format_string($categoryname, true, ['context' => $context ?: $quizcontext]);
     }
 
     /**

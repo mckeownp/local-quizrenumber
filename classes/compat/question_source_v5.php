@@ -29,12 +29,12 @@ use context_module;
  * to be read, which is all this subclass overrides.
  *
  * @package    local_quizrenumber
- * @copyright  2026 Paul
+ * @copyright  2026 Paul McKeown, University of Canterbury <paul.mckeown@canterbury.ac.nz>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class question_source_v5 extends question_source_v4 {
     /** @var array Cache of context id => bank label, per request. */
-    protected $banklabelcache = [];
+    protected array $banklabelcache = [];
 
     #[\Override]
     public function check_ready(int $courseid): void {
@@ -91,10 +91,14 @@ class question_source_v5 extends question_source_v4 {
         if ($categoryname === '') {
             return $bankname;
         }
+        $context = \context::instance_by_id($contextid, IGNORE_MISSING);
         return get_string(
             'bankandcategory',
             'local_quizrenumber',
-            ['bank' => $bankname, 'category' => format_string($categoryname)]
+            [
+                'bank' => $bankname,
+                'category' => format_string($categoryname, true, ['context' => $context ?: $quizcontext]),
+            ]
         );
     }
 
@@ -115,7 +119,7 @@ class question_source_v5 extends question_source_v4 {
             return null;
         }
 
-        return format_string($cm->name);
+        return format_string($cm->name, true, ['context' => $context]);
     }
 
     /**

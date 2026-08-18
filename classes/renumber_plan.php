@@ -24,15 +24,15 @@ namespace local_quizrenumber;
  * the server into applying names it did not derive itself.
  *
  * @package    local_quizrenumber
- * @copyright  2026 Paul
+ * @copyright  2026 Paul McKeown, University of Canterbury <paul.mckeown@canterbury.ac.nz>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class renumber_plan {
     /** @var renumber_row[] Every slot considered, in quiz then slot order. */
-    protected $rows = [];
+    protected array $rows = [];
 
     /** @var array Warnings as ['key' => string, 'a' => mixed]. */
-    protected $warnings = [];
+    protected array $warnings = [];
 
     /**
      * Add a row to the plan.

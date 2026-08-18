@@ -17,7 +17,7 @@
  * Select-all behaviour and a live count on the quiz selection step.
  *
  * @module     local_quizrenumber/selectquizzes
- * @copyright  2026 Paul
+ * @copyright  2026 Paul McKeown, University of Canterbury <paul.mckeown@canterbury.ac.nz>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 

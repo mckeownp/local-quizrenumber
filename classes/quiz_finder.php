@@ -25,7 +25,7 @@ use local_quizrenumber\compat\question_source_interface;
  * and section naming all come from the same place the course page uses.
  *
  * @package    local_quizrenumber
- * @copyright  2026 Paul
+ * @copyright  2026 Paul McKeown, University of Canterbury <paul.mckeown@canterbury.ac.nz>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class quiz_finder {
@@ -59,13 +59,17 @@ class quiz_finder {
 
         $quizzes = [];
         foreach ($cms as $quizid => $cm) {
-            $summary = isset($summaries[$quizid]) ? $summaries[$quizid] : ['fixed' => 0, 'random' => 0, 'total' => 0];
+            $summary = $summaries[$quizid] ?? ['fixed' => 0, 'random' => 0, 'total' => 0];
 
             $section = $cm->get_section_info();
             $quizzes[] = [
                 'id' => $quizid,
                 'cmid' => (int)$cm->id,
-                'name' => format_string($cm->name),
+                // Formatted against the module's own context so multilang and other filters
+                // resolve the same way they do on the course page.
+                'name' => format_string($cm->name, true, ['context' => \context_module::instance($cm->id)]),
+                // Section names arrive already passed through format_string(), so they must
+                // not be escaped a second time.
                 'sectionname' => $section ? get_section_name($courseid, $section) : '',
                 'fixedcount' => $summary['fixed'],
                 'randomcount' => $summary['random'],
@@ -108,6 +112,43 @@ class quiz_finder {
             }
         }
         return $filtered;
+    }
+
+    /**
+     * Link to a quiz, if this user is allowed to open it.
+     *
+     * A shared question can be used by quizzes in courses the user has nothing to do with, so
+     * this deliberately returns an empty string rather than a link they would only bounce off:
+     * course access first, then the activity's own visibility rules.
+     *
+     * @param int $courseid Course owning the quiz.
+     * @param int $quizid Quiz instance id.
+     * @return string The view URL, or an empty string if the user cannot open it.
+     */
+    public static function get_quiz_url(int $courseid, int $quizid): string {
+        try {
+            $course = get_course($courseid);
+        } catch (\moodle_exception $e) {
+            // Course has gone; nothing to link to.
+            return '';
+        }
+
+        if (!can_access_course($course)) {
+            return '';
+        }
+
+        $modinfo = get_fast_modinfo($course);
+        foreach ($modinfo->get_instances_of('quiz') as $cm) {
+            if ((int)$cm->instance !== $quizid) {
+                continue;
+            }
+            if (!$cm->uservisible) {
+                return '';
+            }
+            return (new \moodle_url('/mod/quiz/view.php', ['id' => $cm->id]))->out(false);
+        }
+
+        return '';
     }
 
     /**

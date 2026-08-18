@@ -18,7 +18,7 @@
  * Entry point and step router for the quiz question renumbering tool.
  *
  * @package    local_quizrenumber
- * @copyright  2026 Paul
+ * @copyright  2026 Paul McKeown, University of Canterbury <paul.mckeown@canterbury.ac.nz>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -47,7 +47,7 @@ $PAGE->set_url($pageurl);
 $PAGE->set_context($coursecontext);
 $PAGE->set_pagelayout('incourse');
 $PAGE->set_title(get_string('pluginname', 'local_quizrenumber'));
-$PAGE->set_heading(format_string($course->fullname));
+$PAGE->set_heading(format_string($course->fullname, true, ['context' => $coursecontext]));
 $PAGE->navbar->add(get_string('pluginname', 'local_quizrenumber'), $pageurl);
 
 $source = question_source_factory::create();
@@ -70,8 +70,11 @@ $selectform = null;
 
 // Step 2 posts here with step=configure; work out whether it actually gave us a selection.
 if ($step === 'configure' || $step === 'apply') {
-    if ($step === 'apply') {
-        $quizidsparam = required_param('quizids', PARAM_SEQUENCE);
+    $quizidsparam = optional_param('quizids', '', PARAM_SEQUENCE);
+
+    if ($step === 'apply' || $quizidsparam !== '') {
+        // The apply step always carries its selection in a hidden field, and the usage page
+        // links back here with the same list so the preview can be rebuilt without re-ticking.
         $quizids = array_values(array_filter(array_map('intval', explode(',', $quizidsparam))));
     } else {
         $quizzes = quiz_finder::get_course_quizzes($courseid, $source);
@@ -141,7 +144,7 @@ if ($submitted) {
         \core\output\notification::NOTIFY_SUCCESS
     );
 
-    $renderable = new preview($plan, $settings, $source, true);
+    $renderable = new preview($plan, $settings, $source, true, $courseid, $quizids);
     echo $OUTPUT->render_from_template(
         'local_quizrenumber/preview_table',
         $renderable->export_for_template($OUTPUT)
@@ -161,7 +164,7 @@ echo $OUTPUT->heading(get_string('previewheading', 'local_quizrenumber'));
 
 $renumberform->display();
 
-$renderable = new preview($plan, $settings, $source, false);
+$renderable = new preview($plan, $settings, $source, false, $courseid, $quizids);
 echo $OUTPUT->render_from_template(
     'local_quizrenumber/preview_table',
     $renderable->export_for_template($OUTPUT)

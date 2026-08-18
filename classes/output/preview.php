@@ -25,40 +25,40 @@ use renderer_base;
  * Turns a renumbering plan into template context for the preview and results tables.
  *
  * @package    local_quizrenumber
- * @copyright  2026 Paul
+ * @copyright  2026 Paul McKeown, University of Canterbury <paul.mckeown@canterbury.ac.nz>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class preview implements \renderable, \templatable {
-    /** @var renumber_plan The plan being displayed. */
-    protected $plan;
-
-    /** @var renumber_settings The options that produced it. */
-    protected $settings;
-
-    /** @var question_source_interface|null Used to describe where shared questions are used. */
-    protected $source;
-
-    /** @var bool Whether this is the read-only results table rather than the live preview. */
-    protected $isresults;
+    /**
+     * @var int How many quizzes to name in the badge tooltip before summarising the rest.
+     *
+     * Eight fits in a readable tooltip. Anything beyond that becomes a wall of text, which is
+     * exactly what happened on a real course where one exam question was reused in 83 quizzes.
+     */
+    const TOOLTIP_MAX_PLACES = 8;
 
     /**
      * Build the renderable.
      *
-     * @param renumber_plan $plan
-     * @param renumber_settings $settings
+     * @param renumber_plan $plan The plan being displayed.
+     * @param renumber_settings $settings The options that produced it.
      * @param question_source_interface|null $source Pass null to skip the "used elsewhere" tooltips.
      * @param bool $isresults True when rendering the after-the-fact results table.
      */
     public function __construct(
-        renumber_plan $plan,
-        renumber_settings $settings,
-        ?question_source_interface $source = null,
-        bool $isresults = false
+        /** @var renumber_plan The plan being displayed */
+        protected readonly renumber_plan $plan,
+        /** @var renumber_settings The options that produced it */
+        protected readonly renumber_settings $settings,
+        /** @var question_source_interface|null Used to describe where shared questions are used */
+        protected readonly ?question_source_interface $source = null,
+        /** @var bool Whether this is the read-only results table rather than the live preview */
+        protected readonly bool $isresults = false,
+        /** @var int Course being worked on, needed to build the usage links */
+        protected readonly int $courseid = 0,
+        /** @var array Quiz ids currently selected, so the usage page can offer a way back */
+        protected readonly array $selectedquizids = [],
     ) {
-        $this->plan = $plan;
-        $this->settings = $settings;
-        $this->source = $source;
-        $this->isresults = $isresults;
     }
 
     /**
@@ -87,6 +87,7 @@ class preview implements \renderable, \templatable {
                     'shared' => $slot->is_shared(),
                     'usagecount' => $slot->usagecount,
                     'usagetooltip' => $this->build_usage_tooltip($slot),
+                    'usageurl' => $this->build_usage_url($slot),
                 ];
             }
 
@@ -117,7 +118,30 @@ class preview implements \renderable, \templatable {
     }
 
     /**
+     * Link to the full usage list for a shared question.
+     *
+     * @param \local_quizrenumber\compat\question_slot $slot
+     * @return string Empty if the question is not shared, so the template shows a plain badge.
+     */
+    protected function build_usage_url(\local_quizrenumber\compat\question_slot $slot): string {
+        if (!$slot->is_shared() || !$slot->is_renameable() || $this->courseid === 0) {
+            return '';
+        }
+
+        return (new \moodle_url('/local/quizrenumber/usage.php', [
+            'id' => $this->courseid,
+            'questionid' => $slot->questionid,
+            'quizid' => $slot->quizid,
+            'quizids' => implode(',', $this->selectedquizids),
+        ]))->out(false);
+    }
+
+    /**
      * Describe the other places a shared question is used.
+     *
+     * Capped rather than exhaustive: a question reused across years can appear in dozens of
+     * quizzes, and a title attribute listing eighty of them is unreadable. The exact count is
+     * already on the badge, and the full list is one click away.
      *
      * @param \local_quizrenumber\compat\question_slot $slot
      * @return string Empty if the question is not shared or no source was supplied.
@@ -127,13 +151,18 @@ class preview implements \renderable, \templatable {
             return '';
         }
 
-        $details = $this->source->get_usage_details($slot->questionid, $slot->quizid);
-        if (empty($details)) {
+        $details = $this->source->get_usage_details(
+            $slot->questionid,
+            $slot->quizid,
+            self::TOOLTIP_MAX_PLACES,
+            $this->courseid
+        );
+        if (empty($details['places'])) {
             return '';
         }
 
         $places = [];
-        foreach ($details as $detail) {
+        foreach ($details['places'] as $detail) {
             if ($detail['samecourse']) {
                 $places[] = $detail['quizname'];
             } else {
@@ -142,6 +171,13 @@ class preview implements \renderable, \templatable {
             }
         }
 
-        return get_string('usedalsoin', 'local_quizrenumber', implode('; ', $places));
+        $tooltip = get_string('usedalsoin', 'local_quizrenumber', implode('; ', $places));
+
+        $remaining = $details['total'] - count($details['places']);
+        if ($remaining > 0) {
+            $tooltip .= ' ' . get_string('usageandothers', 'local_quizrenumber', $remaining);
+        }
+
+        return $tooltip;
     }
 }

@@ -31,7 +31,7 @@ require_once($CFG->libdir . '/formslib.php');
  * below, and again in renumber_settings, because a crafted POST never touches the JavaScript.
  *
  * @package    local_quizrenumber
- * @copyright  2026 Paul
+ * @copyright  2026 Paul McKeown, University of Canterbury <paul.mckeown@canterbury.ac.nz>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class renumber_form extends \moodleform {
@@ -202,9 +202,9 @@ class renumber_form extends \moodleform {
     protected function get_site_defaults(): array {
         $config = get_config('local_quizrenumber');
         return [
-            'startnumber' => isset($config->defaultstartnumber) ? (int)$config->defaultstartnumber : 10,
-            'increment' => isset($config->defaultincrement) ? (int)$config->defaultincrement : 10,
-            'padding' => isset($config->defaultpadding) ? (int)$config->defaultpadding : 4,
+            'startnumber' => (int)($config->defaultstartnumber ?? 10),
+            'increment' => (int)($config->defaultincrement ?? 10),
+            'padding' => (int)($config->defaultpadding ?? 4),
         ];
     }
 }

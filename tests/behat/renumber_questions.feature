@@ -113,6 +113,46 @@ Feature: Renumber the questions in a course's quizzes
     And I press "Continue to preview"
     Then I should see "Select at least one quiz to renumber."
 
+  Scenario: The shared badge links to the full usage list and back again
+    Given I am on the "Course 1" course page logged in as teacher1
+    When I navigate to "Renumber quiz questions" in current page administration
+    # Cherry is in Quiz B only, so pick a quiz whose questions are shared.
+    And I set the field "Quiz A" to "1"
+    And I press "Continue to preview"
+    Then I should see "Preview renumbering"
+    # Apple and Banana are used once each, so no badge should be offered for them.
+    And I should not see "Used in 2 places"
+
+  Scenario: A question used by two quizzes is badged and its usage page lists both
+    Given the following "questions" exist:
+      | questioncategory | qtype     | name   | questiontext    |
+      | Test questions   | truefalse | Shared | Shared question |
+    And quiz "Quiz A" contains the following questions:
+      | question | page |
+      | Shared   | 1    |
+    And quiz "Quiz B" contains the following questions:
+      | question | page |
+      | Shared   | 1    |
+    And I am on the "Course 1" course page logged in as teacher1
+    When I navigate to "Renumber quiz questions" in current page administration
+    And I set the field "Quiz A" to "1"
+    And I press "Continue to preview"
+    Then I should see "Used in 2 places"
+    When I follow "Used in 2 places"
+    Then I should see "Quizzes using this question"
+    And I should see "Used in 2 quiz(zes) in total."
+    And I should see "Quiz A"
+    And I should see "Quiz B"
+    # Both quizzes are in the course being worked on, so neither is flagged as elsewhere.
+    And I should not see "Another course"
+    # And each quiz links through to itself.
+    And "Quiz A" "link" should exist
+    And "Quiz B" "link" should exist
+    # And the way back returns to the preview, not just the quiz list.
+    When I follow "Back to the list"
+    Then I should see "Preview renumbering"
+    And I should see "0010_Apple"
+
   @javascript
   Scenario: The preview updates without reloading and select all ticks every quiz
     Given I am on the "Course 1" course page logged in as teacher1

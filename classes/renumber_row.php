@@ -26,7 +26,7 @@ use local_quizrenumber\compat\question_slot;
  * does not touch.
  *
  * @package    local_quizrenumber
- * @copyright  2026 Paul
+ * @copyright  2026 Paul McKeown, University of Canterbury <paul.mckeown@canterbury.ac.nz>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class renumber_row {
@@ -42,36 +42,32 @@ class renumber_row {
     /** @var string The new name is identical to the current one. */
     const SKIP_UNCHANGED = 'unchanged';
 
-    /** @var question_slot The slot this row describes. */
-    public $slot;
-
     /** @var string Name before any change. */
-    public $currentname;
+    public string $currentname;
 
     /** @var string Name after prefix stripping, before the new prefix is applied. */
-    public $strippedname;
+    public string $strippedname;
 
     /** @var string Name the tool will write, or an empty string for skipped rows. */
-    public $newname;
+    public string $newname = '';
 
     /** @var int|null Number allocated to this row, or null if it was not given one. */
-    public $number;
+    public ?int $number = null;
 
     /** @var string|null One of the SKIP_* constants, or null if this row will be applied. */
-    public $skipreason;
+    public ?string $skipreason = null;
 
     /**
      * Build a row.
      *
-     * @param question_slot $slot
+     * @param question_slot $slot The slot this row describes.
      */
-    public function __construct(question_slot $slot) {
-        $this->slot = $slot;
+    public function __construct(
+        /** @var question_slot The slot this row describes */
+        public readonly question_slot $slot,
+    ) {
         $this->currentname = $slot->name;
         $this->strippedname = $slot->name;
-        $this->newname = '';
-        $this->number = null;
-        $this->skipreason = null;
     }
 
     /**

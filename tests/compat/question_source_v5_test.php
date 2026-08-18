@@ -30,7 +30,7 @@ require_once($CFG->dirroot . '/mod/quiz/locallib.php');
  * quiz can pull from a bank in another course entirely.
  *
  * @package    local_quizrenumber
- * @copyright  2026 Paul
+ * @copyright  2026 Paul McKeown, University of Canterbury <paul.mckeown@canterbury.ac.nz>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers     \local_quizrenumber\compat\question_source_v5
  */
@@ -213,9 +213,9 @@ final class question_source_v5_test extends \advanced_testcase {
         $this->assertTrue($refreshed[1]->is_shared());
 
         $details = $source->get_usage_details($questionid, (int)$quizhere->id);
-        $this->assertCount(1, $details);
-        $this->assertFalse($details[0]['samecourse']);
-        $this->assertSame($othercourse->fullname, $details[0]['coursename']);
+        $this->assertCount(1, $details['places']);
+        $this->assertFalse($details['places'][0]['samecourse']);
+        $this->assertSame($othercourse->fullname, $details['places'][0]['coursename']);
     }
 
     /**

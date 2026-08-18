@@ -1,0 +1,30 @@
+/* Styles for local_quizrenumber.
+ *
+ * Every plugin's styles.css is concatenated into one site-wide sheet, so every selector here
+ * is namespaced with the plugin's frankenstyle prefix and can never collide with another
+ * plugin or with core.
+ *
+ * The three count colours answer "will renumbering do anything to this quiz?" at a glance.
+ * Backgrounds and text are taken from Bootstrap's own alert palette, which keeps the
+ * contrast ratios above the WCAG AA threshold rather than inventing pastel pairs.
+ */
+
+.local-quizrenumber-count-fixed {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.local-quizrenumber-count-mixed {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.local-quizrenumber-count-random {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.local-quizrenumber-count-empty {
+    background-color: #e2e3e5;
+    color: #383d41;
+}

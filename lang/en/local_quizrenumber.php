@@ -18,20 +18,23 @@
  * English strings for local_quizrenumber.
  *
  * @package    local_quizrenumber
- * @copyright  2026 Paul
+ * @copyright  2026 Paul McKeown, University of Canterbury <paul.mckeown@canterbury.ac.nz>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
 $string['applyrenumbering'] = 'Apply renumbering';
+$string['backtopreview'] = 'Back to the list';
 $string['bankandcategory'] = '{$a->bank} ({$a->category})';
 $string['bankquizonly'] = 'Quiz-only question';
 $string['bankunknown'] = 'Unknown question bank';
 $string['columnbank'] = 'Question bank';
+$string['columncourse'] = 'Course';
 $string['columncurrentname'] = 'Current name';
 $string['columnnewname'] = 'New name';
 $string['columnnotes'] = 'Notes';
+$string['columnquiz'] = 'Quiz';
 $string['columnslot'] = 'Slot';
 $string['columnstrippedname'] = 'Stripped name';
 $string['confirmheader'] = 'Confirm';
@@ -50,17 +53,19 @@ $string['errorincrementtoosmall'] = 'The increment must be at least {$a}.';
 $string['errornoquizselected'] = 'Select at least one quiz to renumber.';
 $string['errorpaddingrange'] = 'The padding width must be between {$a->min} and {$a->max}.';
 $string['errorqbankmissing'] = 'This site reports Moodle 5.0 or later, but the question bank module is not installed. The renumbering tool cannot run until that is resolved.';
+$string['errorquestionnotincourse'] = 'That question is not used by any of the quizzes you selected in this course.';
 $string['errorstartnumberrange'] = 'The start number must be between 0 and {$a}.';
-$string['errorunsupportedversion'] = 'This plugin supports Moodle 4.0 and later. This site reports version {$a}.';
+$string['errorunsupportedversion'] = 'This plugin supports Moodle 4.5 and later. This site reports version {$a}.';
 $string['eventquestionsrenumbered'] = 'Quiz questions renumbered';
 $string['fixedandrandomcount'] = '{$a->fixed} fixed / {$a->random} random';
 $string['hiddenquiz'] = 'Hidden';
 $string['increment'] = 'Increment';
 $string['increment_help'] = 'How much the number goes up between one question and the next. Leaving gaps, for example 10, makes it easy to insert a question later without renumbering everything. The maximum is 100.';
 $string['intro'] = 'Renumber the questions in one or more quizzes so their names carry a zero-padded, incrementing prefix. This makes them sort predictably in the question bank.';
-$string['nothingtorenumber'] = 'There is nothing to renumber in the quizzes you selected. They may contain only random questions, or questions you do not have permission to edit.';
 $string['noquizzesincourse'] = 'This course has no quizzes you can renumber.';
+$string['nothingtorenumber'] = 'There is nothing to renumber in the quizzes you selected. They may contain only random questions, or questions you do not have permission to edit.';
 $string['numberingoptions'] = 'Numbering options';
+$string['opensinnewtab'] = '(opens in a new tab)';
 $string['padding'] = 'Padding width';
 $string['padding_help'] = 'How many digits the number is padded to. A width of 4 turns 10 into 0010. If the numbering runs past the width, the numbers get longer rather than being cut off, and you will see a warning.';
 $string['pluginname'] = 'Renumber quiz questions';
@@ -68,12 +73,13 @@ $string['previewheading'] = 'Preview renumbering';
 $string['previewsummary'] = '{$a} question(s) will be renamed.';
 $string['previewtablecaption'] = 'Preview of the question names before and after renumbering';
 $string['privacy:metadata'] = 'The Renumber quiz questions plugin stores no personal data. It renames questions in the question bank, which the question subsystem is responsible for, and records what it did in the standard log.';
+$string['quiznotaccessible'] = 'You do not have access to this quiz';
 $string['quizrenumber:manage'] = 'Renumber quiz questions';
 $string['quizzesselected'] = '{$a} quiz(zes) selected';
 $string['renumbermore'] = 'Renumber more quizzes';
 $string['reserverandom'] = 'Reserve numbers for random slots';
-$string['reserverandomlabel'] = 'Advance the sequence for random slots as well';
 $string['reserverandom_help'] = 'Off by default, so the numbers run consecutively across the questions that are actually renamed. Turn it on if you would rather the numbers line up with the slot positions shown in the quiz, which leaves gaps where the random slots are.';
+$string['reserverandomlabel'] = 'Advance the sequence for random slots as well';
 $string['resultsheading'] = 'Renumbering results';
 $string['resultssummary'] = '{$a} question(s) renamed.';
 $string['scope'] = 'Numbering scope';
@@ -92,7 +98,13 @@ $string['startnumber_help'] = 'The number given to the first question. With the 
 $string['stripprefix'] = 'Strip existing prefix';
 $string['stripprefix_help'] = 'On by default, so running the tool twice does not stack prefixes such as 0010_0020_name. Only a leading group of three to six digits followed by underscores is removed, so a title that genuinely begins with a short number is left alone. Turn this off if an existing leading number is part of the real title.';
 $string['stripprefixlabel'] = 'Remove any existing number prefix before applying the new one';
+$string['usageandothers'] = '… and {$a} others.';
+$string['usageheading'] = 'Quizzes using this question';
+$string['usageintro'] = 'Renaming this question changes it everywhere it is used. These are all the places it appears.';
 $string['usageothercourse'] = '{$a->coursename} - {$a->quizname}';
+$string['usageothercourselabel'] = 'Another course';
+$string['usagetablecaption'] = 'Courses and quizzes that use this question';
+$string['usagetotal'] = 'Used in {$a} quiz(zes) in total.';
 $string['usedalsoin'] = 'Also used in: {$a}';
 $string['usedelsewhere'] = 'Used in {$a} places';
 $string['warningallrandomshort'] = 'All random';
